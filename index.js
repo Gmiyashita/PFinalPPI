@@ -299,16 +299,16 @@ function batePapo(req, resp){
                     <form method="POST" action="/batePapo">
                         <div class="mb-3">
                             <label for="usuario" class="form-label">Usuário</label>
-                            <select name="usuario" class="form-select" id="usuario" required>
+                            <select name="usuario" id="usuario" class="col-md-2" required>
                                 ${listaUsuarios.map(user => `
                                     <option value="${user.nickname}">${user.nickname}</option>
                                 `).join('')}
                             </select>
-                        </div>
-                        <div class="mb-3">
+                            <p>
                             <label for="msg" class="form-label">Mensagem</label>
                             <textarea name="msg" id="msg" class="form-control" rows="3" required></textarea>
                         </div>
+                        <p>
                         <button type="submit" class="btn btn-primary">Enviar</button>
                         <a href="/" class="btn btn-secondary">Voltar ao Menu</a>
                     </form>
