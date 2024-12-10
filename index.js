@@ -25,6 +25,7 @@ const host = '0.0.0.0';
 
 var listaUsuarios = []; 
 var msg = {};
+const msgbatePapo =[];
 
 function cadastroUsuView(req, resp) {
     resp.send(`
@@ -110,7 +111,7 @@ function cadastrarUsuario(req, resp) {
                                     <th>Nome</th>
                                     <th>E-mail</th>
                                     <th>Nickname</th>
-                                    <th>Bate-Papo</th>
+                                    
                                 </tr>
                             </thead>
                             <tbody>
@@ -119,7 +120,7 @@ function cadastrarUsuario(req, resp) {
                                         <td>${usu.nome}</td>
                                         <td>${usu.email}</td>
                                         <td>${usu.nickname}</td>
-                                        <td><a href="/batePapo?nome=${usu.nome}" class="btn btn-primary">Bate-Papo</a></td>
+                                        <td><a href="/msgDireta?nome=${usu.nome}" class="btn btn-primary">Mensagem Direta</a></td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -200,7 +201,7 @@ function listaUsuario(req,resp){
                                     <th>Nome</th>
                                     <th>E-mail</th>
                                     <th>Nickname</th>
-                                    <th>Bate-Papo</th>
+                                    
                                 </tr>
                             </thead>
                             <tbody>
@@ -209,7 +210,7 @@ function listaUsuario(req,resp){
                                         <td>${usu.nome}</td>
                                         <td>${usu.email}</td>
                                         <td>${usu.nickname}</td>
-                                        <td><a href="/batePapo?nome=${usu.nome}" class="btn btn-primary">Bate-Papo</a></td>
+                                        <td><a href="/msgDireta?nome=${usu.nome}" class="btn btn-primary">Mensagem Direta</a></td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -223,7 +224,7 @@ function listaUsuario(req,resp){
 
 }
 
-function batePapo(req, resp) {
+function msgDireta(req, resp) {
     const nome = req.query.nome;
     const usuario = listaUsuarios.find(usu => usu.nome === nome);
 
@@ -246,16 +247,16 @@ function batePapo(req, resp) {
     resp.send(`
         <html>
             <head>
-                <title>Bate Papo - ${nome}</title>
+                <title>Direct - ${nome}</title>
                 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
             </head>
             <body>
                 <div class="container">
-                    <h1>Bate-Papo com ${nome}</h1>
+                    <h1>Direct - ${nome}</h1>
                     <ul class="list-group">
                         ${mensagens.map(m => `<li class="list-group-item">${m}</li>`).join('')}
                     </ul>
-                    <form method="POST" action="/batePapo">
+                    <form method="POST" action="/msgDireta">
                         <input type="hidden" name="nome" value="${nome}">
                         <div class="mb-3">
                             <input type="text" class="form-control" name="corpomsg" placeholder="Digite sua mensagem" required>
@@ -268,8 +269,7 @@ function batePapo(req, resp) {
         </html>
     `);
 }
-
-function batePapoPost(req, resp) {
+function msgDiretaPost(req, resp) {
     const { nome, corpomsg } = req.body;
 
     if (!msg[nome]) {
@@ -277,7 +277,60 @@ function batePapoPost(req, resp) {
     }
 
     msg[nome].push(corpomsg);
-    resp.redirect(`/batePapo?nome=${nome}`);
+    resp.redirect(`/msgDireta?nome=${nome}`);
+}
+
+function batePapo(req, resp){
+    resp.send(`
+        <html>
+            <head>
+                <title>Bate Papo</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+            </head>
+            <body>
+                <div class="container">
+                    <h1 class="mt-5">Bate-Papo</h1>
+                    <ul class="list-group">
+                        ${msgbatePapo.map(m => `
+                            <li class="list-group-item">
+                            ${m.usuario}: ${m.msg}
+                        </li>`).join('')}
+                    </ul>
+                    <form method="POST" action="/batePapo">
+                        <div class="mb-3">
+                            <label for="usuario" class="form-label">Usuário</label>
+                            <select name="usuario" class="form-select" id="usuario" required>
+                                ${listaUsuarios.map(user => `
+                                    <option value="${user.nickname}">${user.nickname}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="msg" class="form-label">Mensagem</label>
+                            <textarea name="msg" id="msg" class="form-control" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Enviar</button>
+                        <a href="/" class="btn btn-secondary">Voltar ao Menu</a>
+                    </form>
+                    
+                </div>
+            </body>
+        </html>
+        `);
+
+
+}
+
+function batePapoPost(req,resp){   
+    const { usuario, msg } = req.body;
+    
+    if (!usuario || !msg) {
+        resp.redirect('/batePapo');
+        return;
+    }
+    msgbatePapo.push({ usuario, msg });
+    resp.redirect('/batePapo');
+
 }
 
 function autenticarUsuario(req, resp) {
@@ -310,8 +363,10 @@ app.get('/', verificarAutenticacao, menuView);
 app.get('/cadastrarUsuario', verificarAutenticacao, cadastroUsuView);
 app.post('/cadastrarUsuario', verificarAutenticacao, cadastrarUsuario);
 app.get('/listaUsuario', verificarAutenticacao, listaUsuario);
-app.get('/batePapo', verificarAutenticacao, batePapo);
-app.post('/batePapo', verificarAutenticacao, batePapoPost);
+app.get('/msgDireta', verificarAutenticacao, msgDireta);
+app.post('/msgDireta', verificarAutenticacao, msgDiretaPost);
+app.get('/batePapo',verificarAutenticacao,batePapo);
+app.post('/batePapo',verificarAutenticacao,batePapoPost);
 
 app.listen(porta, host, () => {
     console.log(`Servidor iniciado em http://${host}:${porta}`);
